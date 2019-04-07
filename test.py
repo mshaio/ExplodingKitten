@@ -1,46 +1,24 @@
-import random
-
-class Deck():
-
+class Deck:
     def __init__(self):
-        # create the deck
-        self.discard_pile = []
-        self.deck = self.create_deck()
-        self.shuffle()
-
-    def create_deck(self):
-        deck = []
-        # assign the number of cards for each type to a card (dict)
-        deck_stats = {"A": 4, "B": 6, "C": 5, "D": 5, "E": 5, "F": 5, "G": 5, "H": 5, "I": 5, 'J': 5}
-
-        for card in deck_stats.keys():
-            for i in range(0, deck_stats[card]):
-                deck.append(card)
-        return deck
-
-    def shuffle(self):
-        # randomise the deck or for when the shuffle card is played
-        random.shuffle(self.deck)
-        return self.deck
-
-    def pickup(self):
-        # picks up the first card on the draw pile
-        picked_up = self.deck.pop(0)
-        print(picked_up)
-        return picked_up
-
+        self.cards = ["Pot of Greed", "Black Lotus", "Ace of Spades", "Draw Four"]
 
 class Player:
+    def __init__(self, name, deck):
+        self.name = name
+        self.deck = deck
 
-    def __init__(self):
-        self.player_hand = ["defuse"]
-        self.deck = Deck()
-        for i in range(6):
-            self.draw_card()
+class Computer:
+    def __init__(self, difficulty, deck):
+        self.difficulty = difficulty
+        self.deck = deck
 
-    def draw_card(self):
-        # draw pile reduces by one
-        self.player_hand.append(self.deck.pickup())
-        return self.player_hand
+d = Deck()
+p = Player("Steve", d)
+c = Computer("Easy", d)
 
-player = Player()
+#confirm that the player and computer decks are the same object
+print(p.deck is c.deck)
+
+#changes made to the deck via p will be observable from c and vice versa
+p.deck.cards.append("How to Play Poker Instruction Card")
+print(c.deck.cards)
