@@ -18,8 +18,6 @@ class Deck():
     def create_deck(self):
         '''Creates the deck'''
         deck = []
-        #assign the number of cards for each type to a card (dict)
-        #deck_stats = {"hairy_potatoe":5, "water_mallon":5, "defuse":6, "nope":5, "shuffle":5, "skip":5, "attack":5, "beard":5, "rainbow":5, "taco":5, 'future':5}
         #assign a value to each card for algorithmic purposes
         deck_stats = {"hairy_potatoe":5, "water_mallon":5, "defuse":4, "nope":5, "shuffle":5, "skip":5, "attack":5, "beard":5, "rainbow":5, "taco":5, 'future':5, 'favour':5}
         #create the card by putting the cards into a list then shuffle the list to randomise
@@ -103,8 +101,7 @@ class Card():
 
     def attack(self):
         '''#take 2 turns'''
-        number_of_turns = 2
-        return number_of_turns
+        return "attack"
 
     def beard(self):
         '''Has no effect on it's own. Special effect only kicks in when there are 2 or 3 cards'''
@@ -115,6 +112,11 @@ class Card():
         '''Has no effect on it's own. Special effect only kicks in when there are 2 or 3 cards'''
         print("water_mallon")
         return
+
+    def favour(self):
+        '''Gives the other player a card of your choice'''
+        print("favour")
+        return "favour"
 
     def card_effect(self,nope):
         '''
@@ -205,6 +207,8 @@ class Player(Deck, Card):
             pass
         elif (self.deck.discard_pile[-1] == "attack"):
             return Card().attack()
+        elif (self.deck.discard_pile[-1] == "favour"):
+            return Card().favour()
         elif (len(cards_to_play) == 3):
             #assuming they are all identical by this stage of the code
             if (self.duplicates(cards_to_play) == True):
@@ -241,24 +245,42 @@ class Player(Deck, Card):
         '''Finds idenitcal cards in player's hand'''
         is_duplicate = False
         possible_duplicates = []
-        if (len(cards_to_play) > 1 and len(cards_to_play) < 4):
-            for i in range(len(cards_to_play)):
-                possible_duplicates.append(self.player_hand[int(cards_to_play[i])])
-            if (len(set(possible_duplicates)) == 1):
-                print("True1")
-                is_duplicate = True
-            else:
-                print("False1")
-                is_duplicate = False
-        return is_duplicate
+        if (self.can_play_duplicates(cards_to_play)):
+            if (len(cards_to_play) > 1 and len(cards_to_play) < 4):
+                for i in range(len(cards_to_play)):
+                    possible_duplicates.append(self.player_hand[int(cards_to_play[i])])
+                if (len(set(possible_duplicates)) == 1):
+                    print("True1")
+                    is_duplicate = True
+                else:
+                    print("False1")
+                    is_duplicate = False
+            return is_duplicate
+        return False
 
+    def can_play_duplicates(self,cards_to_play):
+        '''
+        Checks the cards played for duplicates are valid cards.
+        Eg, only non-special cards can be played, attack card has speial affect so it cannot be used as duplicates
+        '''
+        good_cards = ['taco','beard','water_mallon','hairy_potatoe','rainbow']
+        if (self.player_hand[int(cards_to_play[0])] in good_cards):
+            return True
+        return False
+
+    def pick_card_to_give(self):
+        '''Pick a car you want to give to your opponent'''
+        #Check that card_to_give has only 1 item
+        card_to_give = raw_input("Which card do you want to give away? Enter the number: ")
+        card_to_give = self.player_hand.pop(int(card_to_give))
+        #adds the item to computer's hand
+        return card_to_give
 
 #Common functions used outside of classes
 def common_tasks():
     '''Asks for which card or cards to play and put them in a list where there is a space between them from the input'''
     cards_to_play = raw_input("Which card or cards do you want to play? Enter the number: ")
     cards_to_play = cards_to_play.split()
-    print(2)
     print(cards_to_play)
     if (len(cards_to_play) > 1 and len(cards_to_play) < 4):
         if (player.duplicates(cards_to_play) == True and len(cards_to_play) == 2):
@@ -273,8 +295,8 @@ def common_tasks():
             else:
                 print("Computer does not have the card you want")
         else:
-            print("Cards played are not identical")
-            common_tasks()
+            print("Cards played are not valid")
+            cards_to_play = common_tasks()
     return cards_to_play
 
 #Creats deck, player and computer hand
@@ -294,13 +316,16 @@ if __name__ == "__main__":
     for i in range(number_of_turns):
         cards_to_play = common_tasks()
         player.show_cards()
-        attack = player.play_card(cards_to_play)
+        card_effect = player.play_card(cards_to_play)
 
         if (game_deck.discard_pile[-1] != "skip"):
             #if (player.skip() !=):
-            if (attack == 2):
+            if (card_effect == "attack"):
                 player.draw_card()
                 common_tasks()
+            elif (card_effect == "favour"):
+                computer.computer_hand.append(player.pick_card_to_give())
+                computer.show_cards()
             else:
                 print("skip card not played")
                 player.draw_card()
