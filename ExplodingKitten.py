@@ -1,6 +1,8 @@
+__metaclass__ = type
 import random
 import sys
-import pandas as pd
+#import pandas as pd
+from terminaltextcolour import *
 
 number_of_turns = 1
 class Deck():
@@ -128,41 +130,6 @@ class Card():
         return True
 
 
-
-class Computer(Deck):
-    '''
-    Creates the computer hand and actions associated with the computer
-    '''
-    def __init__(self, deck):
-        '''Computer object still needs to access the same deck as the players'''
-        self.computer_hand = ["defuse"]
-        self.deck = deck
-        for i in range(6):
-            self.draw_card()
-
-    def draw_card(self):
-        #draw pile reduces by one
-        self.computer_hand.append(self.deck.pickup())
-        return self.computer_hand
-
-
-    def play_card(self):
-        #Computer AI plays a card based on card_played by player
-        #decides to draw or play card
-        #keeps drawing card until there are only 16 cards Left
-        #if Computer has no diffuse use 3 cards to get a defuse card from player
-        #use future if there are 20cards or less
-        #draw card
-        #plays defuse if drawn exploding kittens
-        self.deck.discard_pile.append(self.computer_hand[-1])
-        print(self.deck.discard_pile)
-        return
-
-    def show_cards(self):
-        '''show all cards in hand'''
-        print(self.computer_hand)
-        return self.computer_hand
-
 class Player(Deck, Card):
     def __init__(self, deck):
         '''Create player's initial hand, must have a defuse, get cards from the deck, at the beginning no one can draw an exploding kitten'''
@@ -184,6 +151,7 @@ class Player(Deck, Card):
         '''
         cards_to_play = []
         for i in card_to_play:
+            #print(i)
             cards_to_play.append(int(i))
 
         for i in range(len(cards_to_play)):
@@ -192,8 +160,8 @@ class Player(Deck, Card):
         for i in reversed(cards_to_play):
             #sort the cards to play in the reverse order so when pop is used, it pops the largest to smallest
             self.player_hand.pop(i)
-            print("Discard Pile: ")
-            print(self.deck.discard_pile)
+        print("Discard Pile: ")
+        print(self.deck.discard_pile)
 
         if (self.deck.discard_pile[-1] == "defuse"):
             return Card().defuse(self.deck.discard_pile[-1])
@@ -223,7 +191,7 @@ class Player(Deck, Card):
 
     def show_deck(self):
         '''Shows all cards remaining in deck'''
-        print self.deck.show_deck()
+        print(self.deck.show_deck())
         return
 
     def show_discard_pile(self):
@@ -276,64 +244,143 @@ class Player(Deck, Card):
         #adds the item to computer's hand
         return card_to_give
 
+
+class Computer(Player):
+    '''
+    Creates the computer hand and actions associated with the computer
+    '''
+    def __init__(self, deck):
+        '''Computer object still needs to access the same deck as the players'''
+        self.player_hand = ["defuse"]
+        self.deck = deck
+        for i in range(6):
+            self.draw_card()
+
+    def draw_card(self):
+        #draw pile reduces by one
+        self.player_hand.append(self.deck.pickup())
+        return self.player_hand
+
+
+    def play_card(self, card_to_play):
+        '''
+        #Computer AI plays a card based on card_played by player
+        #decides to draw or play card
+        #keeps drawing card until there are only 16 cards Left
+        #if Computer has no diffuse use 3 cards to get a defuse card from player
+        #use future if there are 20cards or less
+        #draw card
+        #plays defuse if drawn exploding kittens
+
+        For now just plays the second card in hand. Computer play logic to be developed
+        '''
+        return super(Computer, self).play_card(card_to_play)
+
+    def show_cards(self):
+        '''show all cards in hand'''
+        print(self.player_hand)
+        return self.player_hand
+
 #Common functions used outside of classes
-def common_tasks():
+def common_tasks(whos_turn, next_person):
     '''Asks for which card or cards to play and put them in a list where there is a space between them from the input'''
-    cards_to_play = raw_input("Which card or cards do you want to play? Enter the number: ")
+    print(whos_turn is player)
+    print(whos_turn is computer)
+    if (whos_turn is player):
+        cards_to_play = raw_input("Which card or cards do you want to play? Enter the number: ")
+    else:
+        cards_to_play = "1" #computer.play_card("1") #For the computer to play automatically
     cards_to_play = cards_to_play.split()
-    print(cards_to_play)
+    #print(cards_to_play)
     if (len(cards_to_play) > 1 and len(cards_to_play) < 4):
-        if (player.duplicates(cards_to_play) == True and len(cards_to_play) == 2):
-            card_to_steal = raw_input("Which card do you want to steal? Enter the number: ")
-            stolen_card = computer.computer_hand.pop(int(card_to_steal))
+        if (whos_turn.duplicates(cards_to_play) == True and len(cards_to_play) == 2):
+            #otherwise the computer asks for a card. For now let it always be the zeroth cards
+            card_to_steal = "0"
+            if (whos_turn is player):
+                card_to_steal = raw_input("Which card do you want to steal? Enter the number: ")
+            stolen_card = next_person.player_hand.pop(int(card_to_steal))
             print("Stole card: %s" % stolen_card)
-            player.player_hand.append(stolen_card)
-        elif (player.duplicates(cards_to_play) == True and len(cards_to_play) == 3):
-            card_to_steal = raw_input("Which card do you want to steal from the computer? Enter the card name: ")
-            if (card_to_steal in computer.computer_hand):
-                player.player_hand.append(card_to_steal)
+            whos_turn.player_hand.append(stolen_card)
+        elif (whos_turn.duplicates(cards_to_play) == True and len(cards_to_play) == 3):
+            #otherwise the computer asks for a card. For now let it always be defuse all the time
+            card_to_steal = "defuse"
+            if (whos_turn is player):
+                card_to_steal = raw_input("What card do you want to steal? Enter the card name: ")
+            if (card_to_steal in next_person.player_hand):
+                whos_turn.player_hand.append(card_to_steal)
             else:
-                print("Computer does not have the card you want")
+                print("The card picked is not in the opponent's hand")
         else:
             print("Cards played are not valid")
-            cards_to_play = common_tasks()
+            cards_to_play = common_tasks(whos_turn, next_person)
     return cards_to_play
+
+
 
 #Creats deck, player and computer hand
 if __name__ == "__main__":
     game_deck = Deck()
     computer = Computer(game_deck)
+    sys.stdout.write(RED)
     print("Computer Hand: ")
     computer.show_cards()
     player = Player(game_deck)
+    sys.stdout.write(BLUE)
     print("Player Hand: ")
     player.show_cards()
     game_deck.add_exploding_kittens()
     game_deck.shuffle()
+    sys.stdout.write(GREEN)
     print("Game Deck: %s" % game_deck.show_deck())
     print("Number of cards remaining in deck: %d" %game_deck.deck_size())
-
-    for i in range(number_of_turns):
-        cards_to_play = common_tasks()
-        player.show_cards()
-        card_effect = player.play_card(cards_to_play)
+    sys.stdout.write(RESET)
+    #When the game starts player makes the first move
+    whos_turn = player
+    next_person = computer
+    kitten_explodes = False
+    #Keeps playing until someone gets the exploding kitten
+    while kitten_explodes == False:
+        cards_to_play = common_tasks(whos_turn,next_person)
+        if (whos_turn is player):
+            card_effect = player.play_card(cards_to_play)
+        else:
+            card_effect = computer.play_card(cards_to_play)
 
         if (game_deck.discard_pile[-1] != "skip"):
             #if (player.skip() !=):
             if (card_effect == "attack"):
-                player.draw_card()
+                whos_turn.draw_card() #player.draw_card()
                 common_tasks()
             elif (card_effect == "favour"):
-                computer.computer_hand.append(player.pick_card_to_give())
-                computer.show_cards()
+                next_person.player_hand.append(whos_turn.pick_card_to_give())
+                next_person.show_cards()
             else:
                 print("skip card not played")
-                player.draw_card()
-                print("Player Hand: ")
-                player.show_cards()
+                whos_turn.draw_card()
+                #print("Player Hand: ")
+                #whos_turn.show_cards()
         else:
             print("skip card played")
 
-        computer.play_card()
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        if (player.player_hand[-1] == "exploding_kitten" or computer.player_hand[-1] == "exploding_kitten"):
+            kitten_explodes = True
+        #computer.play_card()
+        if (whos_turn is player):
+            whos_turn = computer
+            next_person = player
+        else:
+            whos_turn = player
+            next_person = computer
+
+        sys.stdout.write(BLUE)
+        print("Player Hand: ")
+        player.show_cards()
+        sys.stdout.write(RED)
+        print("Computer Hand: ")
+        computer.show_cards()
+        sys.stdout.write(GREEN)
+        print("Game Deck: %s" % game_deck.show_deck())
+        sys.stdout.write(RESET)
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("GAME OVER")
     #machine = Computer()
