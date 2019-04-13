@@ -315,7 +315,58 @@ def common_tasks(whos_turn, next_person):
             cards_to_play = common_tasks(whos_turn, next_person)
     return cards_to_play
 
+def check_kitten_explodes():
+    '''Checks if the exploding kitten is in the player's hands'''
+    if ("exploding_kitten" in player.player_hand or "exploding_kitten" in computer.player_hand):
+        return True
+    return False
 
+def play_pattern(whos_turn,next_person):
+    '''Play pattern of the game'''
+    kitten_explodes = False
+    cards_to_play = common_tasks(whos_turn,next_person)
+    if (whos_turn is player):
+        card_effect = player.play_card(cards_to_play)
+    else:
+        card_effect = computer.play_card(cards_to_play)
+
+    if (game_deck.discard_pile[-1] != "skip"):
+        #if (player.skip() !=):
+        if (card_effect == "favour"):
+            whos_turn.player_hand.append(next_person.pick_card_to_give())
+        if (card_effect == "attack"):
+            whos_turn.draw_card()
+            kitten_explodes = check_kitten_explodes()
+            for i in range(2):
+                play_pattern(next_person,whos_turn)
+                kitten_explodes = check_kitten_explodes()
+                if (game_deck.discard_pile[-1] != "skip"):
+                    next_person.draw_card() #player.draw_card()
+                if (i == 1):
+                    if (whos_turn is player):
+                        whos_turn = computer
+                        next_person = player
+                    else:
+                        whos_turn = player
+                        next_person = computer
+        else:
+            whos_turn.draw_card()
+    else:
+        print("skip card played")
+
+    kitten_explodes = check_kitten_explodes()
+
+    sys.stdout.write(RED)
+    print("Computer Hand: ")
+    computer.show_cards()
+    sys.stdout.write(BLUE)
+    print("Player Hand: ")
+    player.show_cards()
+    sys.stdout.write(GREEN)
+    print("Game Deck: %s" % game_deck.show_deck())
+    sys.stdout.write(RESET)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    return whos_turn, next_person, kitten_explodes
 
 #Creats deck, player and computer hand
 if __name__ == "__main__":
@@ -340,51 +391,13 @@ if __name__ == "__main__":
     kitten_explodes = False
     #Keeps playing until someone gets the exploding kitten
     while kitten_explodes == False:
-        cards_to_play = common_tasks(whos_turn,next_person)
-        if (whos_turn is player):
-            card_effect = player.play_card(cards_to_play)
-        else:
-            card_effect = computer.play_card(cards_to_play)
+        whos_turn, next_person, kitten_explodes = play_pattern(whos_turn,next_person)
 
-        if (game_deck.discard_pile[-1] != "skip"):
-            #if (player.skip() !=):
-            if (card_effect == "favour"):
-                whos_turn.player_hand.append(next_person.pick_card_to_give())
-            if (card_effect == "attack"):
-                whos_turn.draw_card()
-                for i in range(2):
-                    common_tasks(next_person,whos_turn)
-                    #has to play the card next_person.play_card(common_tasks(next_person,whos_turn))?
-                    #Will have to think of another method because the next_person may play cards with affects
-                    #Will have to create a method for this part of the code for reuse most likely
-                    if (game_deck.discard_pile[-1] != "skip"):
-                        next_person.draw_card() #player.draw_card()
-                #Need to make sure that next_person and whos_turn doesn't change if this happens
-            else:
-                whos_turn.draw_card()
-            #if (game_deck.discard_pile[-1] != "skip" )
-        else:
-            print("skip card played")
-
-        if (player.player_hand[-1] == "exploding_kitten" or computer.player_hand[-1] == "exploding_kitten"):
-            kitten_explodes = True
-        #computer.play_card()
         if (whos_turn is player):
             whos_turn = computer
             next_person = player
         else:
             whos_turn = player
             next_person = computer
-
-        sys.stdout.write(RED)
-        print("Computer Hand: ")
-        computer.show_cards()
-        sys.stdout.write(BLUE)
-        print("Player Hand: ")
-        player.show_cards()
-        sys.stdout.write(GREEN)
-        print("Game Deck: %s" % game_deck.show_deck())
-        sys.stdout.write(RESET)
-        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     print("GAME OVER")
     #machine = Computer()
