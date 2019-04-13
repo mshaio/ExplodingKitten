@@ -348,17 +348,21 @@ if __name__ == "__main__":
 
         if (game_deck.discard_pile[-1] != "skip"):
             #if (player.skip() !=):
+            if (card_effect == "favour"):
+                whos_turn.player_hand.append(next_person.pick_card_to_give())
             if (card_effect == "attack"):
-                whos_turn.draw_card() #player.draw_card()
-                common_tasks()
-            elif (card_effect == "favour"):
-                next_person.player_hand.append(whos_turn.pick_card_to_give())
-                next_person.show_cards()
-            else:
-                print("skip card not played")
                 whos_turn.draw_card()
-                #print("Player Hand: ")
-                #whos_turn.show_cards()
+                for i in range(2):
+                    common_tasks(next_person,whos_turn)
+                    #has to play the card next_person.play_card(common_tasks(next_person,whos_turn))?
+                    #Will have to think of another method because the next_person may play cards with affects
+                    #Will have to create a method for this part of the code for reuse most likely
+                    if (game_deck.discard_pile[-1] != "skip"):
+                        next_person.draw_card() #player.draw_card()
+                #Need to make sure that next_person and whos_turn doesn't change if this happens
+            else:
+                whos_turn.draw_card()
+            #if (game_deck.discard_pile[-1] != "skip" )
         else:
             print("skip card played")
 
@@ -372,12 +376,12 @@ if __name__ == "__main__":
             whos_turn = player
             next_person = computer
 
-        sys.stdout.write(BLUE)
-        print("Player Hand: ")
-        player.show_cards()
         sys.stdout.write(RED)
         print("Computer Hand: ")
         computer.show_cards()
+        sys.stdout.write(BLUE)
+        print("Player Hand: ")
+        player.show_cards()
         sys.stdout.write(GREEN)
         print("Game Deck: %s" % game_deck.show_deck())
         sys.stdout.write(RESET)
