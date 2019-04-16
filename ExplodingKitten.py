@@ -37,6 +37,8 @@ class Deck():
     def shuffle(self):
         '''randomise the deck or for when the shuffle card is played'''
         random.shuffle(self.deck)
+        #test = ["exploding_kitten", "nope", "exploding_kitten"]
+        #self.deck = test + self.deck
         return self.deck
 
     def pickup(self):
@@ -208,6 +210,15 @@ class Player(Deck, Card):
             return False
         return True
 
+    def search_defuse(self):
+        '''Looks for a defuse card in the hand and finds its position in hand'''
+        hand_position = 0
+        print(self.player_hand)
+        for i in self.player_hand:
+            if (i == "defuse"):
+                return hand_position
+            hand_position += 1
+        return
 
     def duplicates(self,cards_to_play):
         '''Finds idenitcal cards in player's hand'''
@@ -276,10 +287,54 @@ class Computer(Player):
         '''
         return super(Computer, self).play_card(card_to_play)
 
+    def play_logic(self,deck):
+        """
+        1. If less than 35 cards remaining in deck and have future card play once every 3 returns
+        #2. Don't play cards until there are only 25 cards left
+        3. If future[0] to future[2] is exploding kitten and have shuffle and has more than 14 cards in deck
+           #Play shuffle
+           #Else play skip
+           Else play double to steal cards before drawing
+        4. Put exlpoding kitten on the 5th if exploding kitten is drawn
+        5. Play nope if opponent plays double or tripple to card_to_steal
+        6. If deck has less than 10 cards start to steal cards by using favour or double
+        7. Only use tripple if you have to steal defuse and you have to draw a card afterwards and there is defuse in opponent hands
+        8. If opponent plays defuse play nope
+        """
+        if (len(deck) < 35 and "future" in self.player_hand):
+            card_to_play = self.player_hand.index("future")
+            #add play once every 3 turn
+            if (True in list(map(search_exploding_kitten,deck[:3]))):
+                if ("shuffle" in self.player_hand and len(deck) > 14):
+                    #play shuffle
+                    deck.shuffle()
+                    self.player_hand.remove("shuffle")
+                    deck.discard_pile.append("shuffle")
+                elif ("skip" in self.player_hand):
+                    #need to link to play_pattern()
+                    self.player_hand.remvoe("skip")
+                    deck.discard_pile.append("skip")
+                else:
+                    #play double to steal
+                    pass
+        if ("exploding_kitten" in self.player_hand):
+            #if defuse in hand
+            deck.inset(4,"exploding_kitten") #puts the exploding kitten card back in the deck (5th card)
+
+        if (len(deck) < 25):
+            if (len(deck) <=10):
+                pass
+                #play double or favour
+        self.play_card(card_to_play)
+        return
+
     def show_cards(self):
         '''show all cards in hand'''
         print(self.player_hand)
         return self.player_hand
+
+    def search_exploding_kitten(self,top_three_cards):
+        return top_three_cards == "exploding_kitten"
 
 #Common functions used outside of classes
 def common_tasks(whos_turn, next_person):
@@ -355,6 +410,14 @@ def play_pattern(whos_turn,next_person):
         print("skip card played")
 
     kitten_explodes = check_kitten_explodes()
+    if (kitten_explodes == True):
+        if (whos_turn.search_defuse() != None):
+            whos_turn.play_card([whos_turn.search_defuse()]) #Only works for player not AI at this stage
+            game_deck.deck.append("exploding_kitten") #Puts the exploding kittten back in the bottom of the deck
+            del whos_turn.player_hand[-1] #removes the exploding kitten from the player's hand
+            kitten_explodes = False #Kitten no longer explodes
+
+
 
     sys.stdout.write(RED)
     print("Computer Hand: ")
