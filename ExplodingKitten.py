@@ -145,7 +145,7 @@ class Player(Deck, Card):
         self.player_hand.append(self.deck.pickup())
         return self.player_hand
 
-    def play_card(self,card_to_play):
+    def play_card(self,card_to_play, card_effect_active):
         '''
         Plays a card in hand, the player chooses which card to play. Card 0 is the first card, card 1 is the second card and so on
         1.Convert card_to_play type from list of strings to list of integers
@@ -165,25 +165,26 @@ class Player(Deck, Card):
         print("Discard Pile: ")
         print(self.deck.discard_pile)
 
-        if (self.deck.discard_pile[-1] == "defuse"):
-            return Card().defuse(self.deck.discard_pile[-1])
-        elif (self.deck.discard_pile[-1] == "future"):
-            return Card().future(self.deck.discard_pile[-1],self.deck.deck)
-        elif (self.deck.discard_pile[-1] == "shuffle"):
-            self.deck.shuffle()
-        elif (self.deck.discard_pile[-1] == "skip"):
-            return Card().skip()
-        elif (self.deck.discard_pile[-1] == "nope"):
-            pass
-        elif (self.deck.discard_pile[-1] == "attack"):
-            return Card().attack()
-        elif (self.deck.discard_pile[-1] == "favour"):
-            return Card().favour()
-        elif (len(cards_to_play) == 3):
-            #assuming they are all identical by this stage of the code
-            if (self.duplicates(cards_to_play) == True):
-                card_to_steal = raw_input("Which card do you want to steal from the computer? Enter the card name: ")
-            return card_to_steal
+        if (card_effect_active == True):
+            if (self.deck.discard_pile[-1] == "defuse"):
+                return Card().defuse(self.deck.discard_pile[-1])
+            elif (self.deck.discard_pile[-1] == "future"):
+                return Card().future(self.deck.discard_pile[-1],self.deck.deck)
+            elif (self.deck.discard_pile[-1] == "shuffle"):
+                self.deck.shuffle()
+            elif (self.deck.discard_pile[-1] == "skip"):
+                return Card().skip()
+            elif (self.deck.discard_pile[-1] == "nope"):
+                pass
+            elif (self.deck.discard_pile[-1] == "attack"):
+                return Card().attack()
+            elif (self.deck.discard_pile[-1] == "favour"):
+                return Card().favour()
+            elif (len(cards_to_play) == 3):
+                #assuming they are all identical by this stage of the code
+                if (self.duplicates(cards_to_play) == True):
+                    card_to_steal = raw_input("Which card do you want to steal from the computer? Enter the card name: ")
+                return card_to_steal
         return
 
     def show_cards(self):
@@ -255,6 +256,19 @@ class Player(Deck, Card):
         #adds the item to computer's hand
         return card_to_give
 
+    def nope_logic(self):
+        '''
+        Player Nope:
+            If player has nope card in hand ask if nope wants to be played after the computer has played a card
+        '''
+        to_play = raw_input("Do you want to play your Nope card? Y/N: ")
+        if (to_play == "Y" or to_play == "y"):
+            card_effect_active = True
+            self.player_hand.remove("nope")
+            self.deck.discard_pile.append("nope")
+        else:
+            card_effect_active = False
+        return card_effect_active
 
 class Computer(Player):
     '''
@@ -273,7 +287,7 @@ class Computer(Player):
         return self.player_hand
 
 
-    def play_card(self, card_to_play):
+    def play_card(self, card_to_play, card_effect_active):
         '''
         #Computer AI plays a card based on card_played by player
         #decides to draw or play card
@@ -285,7 +299,7 @@ class Computer(Player):
 
         For now just plays the second card in hand. Computer play logic to be developed
         '''
-        return super(Computer, self).play_card(card_to_play)
+        return super(Computer, self).play_card(card_to_play, card_effect_active)
 
     def play_logic(self,deck):
         """
@@ -299,7 +313,7 @@ class Computer(Player):
         5. Play nope if opponent plays double or tripple to card_to_steal
         6. If deck has less than 10 cards start to steal cards by using favour or double
         7. Only use tripple if you have to steal defuse and you have to draw a card afterwards and there is defuse in opponent hands
-        8. If opponent plays defuse play nope
+
         """
         if (len(deck) < 35 and "future" in self.player_hand):
             card_to_play = self.player_hand.index("future")
@@ -325,8 +339,23 @@ class Computer(Player):
             if (len(deck) <=10):
                 pass
                 #play double or favour
-        self.play_card(card_to_play)
+        #self.play_card(card_to_play)
         return
+
+    def nope_logic(self,opponent_play):
+        '''
+        Computer Nope:
+            If computer has nope in hand:
+                If opponent plays defuse play nope
+                If opponent plays attack or skips
+        '''
+        card_effect_active = True
+        if ("nope" in self.player_hand):
+            if (opponent_play == "defuse" or opponent_play == "attack" or opponent_play == "skip"):
+                card_effect_active = False
+                self.player_hand.remove("nope") #Removes the nope card from hand
+                self.deck.discard_pile.append("nope") #Adds the nope card to the discard pile
+        return card_effect_active
 
     def show_cards(self):
         '''show all cards in hand'''
@@ -338,7 +367,9 @@ class Computer(Player):
 
 #Common functions used outside of classes
 def common_tasks(whos_turn, next_person):
-    '''Asks for which card or cards to play and put them in a list where there is a space between them from the input'''
+    '''Asks for which card or cards to play and put them in a list where there is a space between them from the input
+    returns a string representation of a number, which is the card location in hand
+    '''
     print(whos_turn is player)
     print(whos_turn is computer)
     if (whos_turn is player):
@@ -381,9 +412,11 @@ def play_pattern(whos_turn,next_person):
     kitten_explodes = False
     cards_to_play = common_tasks(whos_turn,next_person)
     if (whos_turn is player):
-        card_effect = player.play_card(cards_to_play)
+        card_effect_active = next_person.nope_logic(whos_turn.player_hand[map(int,cards_to_play)[0]]) #nope logic for computer
+        card_effect = player.play_card(cards_to_play, card_effect_active)
     else:
-        card_effect = computer.play_card(cards_to_play)
+        card_effect_active = next_person.nope_logic() #nope logic for player
+        card_effect = computer.play_card(cards_to_play, card_effect_active)
 
     if (game_deck.discard_pile[-1] != "skip"):
         #if (player.skip() !=):
@@ -412,7 +445,7 @@ def play_pattern(whos_turn,next_person):
     kitten_explodes = check_kitten_explodes()
     if (kitten_explodes == True):
         if (whos_turn.search_defuse() != None):
-            whos_turn.play_card([whos_turn.search_defuse()]) #Only works for player not AI at this stage
+            whos_turn.play_card([whos_turn.search_defuse()], card_effect_active) #Only works for player not AI at this stage
             game_deck.deck.append("exploding_kitten") #Puts the exploding kittten back in the bottom of the deck
             del whos_turn.player_hand[-1] #removes the exploding kitten from the player's hand
             kitten_explodes = False #Kitten no longer explodes
